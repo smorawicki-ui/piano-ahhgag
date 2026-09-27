@@ -184,7 +184,7 @@ const state = {
   showChordHighlight: true,
   selectedChord: null,
   chordCategory: 'major',
-  chordPanelOpen: true,
+  chordPanelOpen: false,
   audioCtx: null,
   reverbNode: null,
   masterGain: null,
@@ -618,7 +618,8 @@ function updateNoteIndicator(midi) {
   const octave = Math.floor(midi / 12) - 1;
   const lang = state.lang;
   const nn = lang === 'es' ? NOTE_NAMES_ES[noteIndex] : NOTE_NAMES[noteIndex];
-  document.getElementById('note-indicator').textContent = nn + octave;
+  const el = document.getElementById('note-indicator');
+  if (el) el.textContent = nn + octave;
 }
 
 // ============================================================
@@ -658,20 +659,15 @@ function clearChordHighlights() {
 function selectChord(chord) {
   state.selectedChord = chord;
 
-  // Update chord display
-  const display = document.getElementById('chord-display');
-  const nameEl = document.getElementById('chord-name-display');
-  const notesEl = document.getElementById('chord-notes-display');
+  // Show chord tag in the chord bar
+  const tag  = document.getElementById('chord-tag');
+  const play = document.getElementById('play-chord-btn');
+  const clr  = document.getElementById('clear-chord-btn');
 
-  display.classList.remove('hidden');
-
-  const lang = state.lang;
-  nameEl.textContent = chord.label;
-
-  const noteLabels = chord.notes.map(n => {
-    return lang === 'es' ? NOTE_NAMES_ES[n] : NOTE_NAMES[n];
-  });
-  notesEl.textContent = (lang === 'es' ? I18N.es.keysLabel : I18N.en.keysLabel) + noteLabels.join(' - ');
+  tag.textContent  = chord.name;
+  tag.classList.remove('hidden');
+  play.classList.remove('hidden');
+  clr.classList.remove('hidden');
 
   if (state.showChordHighlight) {
     highlightChordKeys(chord);
@@ -934,23 +930,28 @@ function bindEvents() {
       btn.classList.add('active');
       state.chordCategory = btn.dataset.cat;
       state.selectedChord = null;
-      document.getElementById('chord-display').classList.add('hidden');
+      // Hide chord tag + mini buttons
+      document.getElementById('chord-tag').classList.add('hidden');
+      document.getElementById('play-chord-btn').classList.add('hidden');
+      document.getElementById('clear-chord-btn').classList.add('hidden');
       clearChordHighlights();
       renderChordList();
     });
   });
 
-  // Chord panel toggle
+  // Chord panel toggle (uses CSS classes now)
   document.getElementById('chord-panel-toggle').addEventListener('click', () => {
     state.chordPanelOpen = !state.chordPanelOpen;
-    const panel = document.getElementById('chord-panel');
-    const btn = document.getElementById('chord-panel-toggle');
+    const panel  = document.getElementById('chord-panel');
+    const arrow  = document.querySelector('#chord-panel-toggle .toggle-arrow');
     if (state.chordPanelOpen) {
-      panel.style.maxHeight = '120px';
-      btn.textContent = '▲';
+      panel.classList.remove('chord-panel-collapsed');
+      panel.classList.add('chord-panel-open');
+      if (arrow) arrow.textContent = '▲';
     } else {
-      panel.style.maxHeight = '0';
-      btn.textContent = '▼';
+      panel.classList.remove('chord-panel-open');
+      panel.classList.add('chord-panel-collapsed');
+      if (arrow) arrow.textContent = '▼';
     }
   });
 
@@ -960,7 +961,9 @@ function bindEvents() {
   // Clear chord
   document.getElementById('clear-chord-btn').addEventListener('click', () => {
     state.selectedChord = null;
-    document.getElementById('chord-display').classList.add('hidden');
+    document.getElementById('chord-tag').classList.add('hidden');
+    document.getElementById('play-chord-btn').classList.add('hidden');
+    document.getElementById('clear-chord-btn').classList.add('hidden');
     clearChordHighlights();
     document.querySelectorAll('.chord-chip.selected').forEach(c => c.classList.remove('selected'));
   });

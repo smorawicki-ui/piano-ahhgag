@@ -1,6 +1,6 @@
 {
-  "name": "PianoChord",
-  "short_name": "PianoChord",
+  "name": "Piano ahhgag",
+  "short_name": "Piano ahhgag",
   "description": "Piano virtual con guía de acordes / Virtual piano with chord guide",
   "start_url": "./",
   "display": "standalone",
@@ -23,6 +23,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["music", "entertainment"],
-  "screenshots": []
+  "categories": ["music", "entertainment"]
 }

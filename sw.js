@@ -1,12 +1,13 @@
 /**
- * PianoChord - Service Worker
- * Caches audio samples and app shell for offline use
+ * Piano ahhgag - Service Worker v3
+ * - App shell: NETWORK FIRST (siempre busca la versión más nueva)
+ * - Audio samples: CACHE FIRST (no cambian, se guardan offline)
  */
 
-const CACHE_NAME = 'pianochord-v1';
-const SAMPLE_CACHE = 'pianochord-samples-v1';
+const SW_VERSION   = 'piano-ahhgag-v3';
+const SAMPLE_CACHE = 'piano-ahhgag-samples-v1';
 
-// App shell files to cache immediately
+// Archivos de la app que se intentan actualizar SIEMPRE desde la red
 const SHELL_FILES = [
   './',
   './index.html',
@@ -15,45 +16,43 @@ const SHELL_FILES = [
   './manifest.json',
 ];
 
-// Install: cache app shell
+// ---- INSTALL: pre-cache shell ----
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(SHELL_FILES);
-    }).then(() => self.skipWaiting())
+    caches.open(SW_VERSION)
+      .then(cache => cache.addAll(SHELL_FILES))
+      .then(() => self.skipWaiting())   // activa el nuevo SW de inmediato
   );
 });
 
-// Activate: clean old caches
+// ---- ACTIVATE: limpia versiones viejas ----
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
+    caches.keys().then(keys =>
+      Promise.all(
         keys
-          .filter(k => k !== CACHE_NAME && k !== SAMPLE_CACHE)
+          .filter(k => k !== SW_VERSION && k !== SAMPLE_CACHE)
           .map(k => caches.delete(k))
-      );
-    }).then(() => self.clients.claim())
+      )
+    ).then(() => self.clients.claim())  // toma control de todas las pestañas
   );
 });
 
-// Fetch: serve from cache, fallback to network
+// ---- FETCH ----
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Audio samples -> use sample cache with network-first strategy
-  if (url.hostname === 'gleitz.github.io' && url.pathname.includes('-mp3')) {
+  // AUDIO SAMPLES → cache-first (no cambian nunca)
+  if (url.hostname === 'gleitz.github.io') {
     event.respondWith(
-      caches.open(SAMPLE_CACHE).then(async (cache) => {
+      caches.open(SAMPLE_CACHE).then(async cache => {
         const cached = await cache.match(event.request);
         if (cached) return cached;
         try {
           const response = await fetch(event.request);
-          if (response.ok) {
-            cache.put(event.request, response.clone());
-          }
+          if (response.ok) cache.put(event.request, response.clone());
           return response;
-        } catch (e) {
+        } catch {
           return new Response('', { status: 503 });
         }
       })
@@ -61,17 +60,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell -> cache first
+  // APP SHELL → network-first: siempre intenta la red, cae a caché si falla
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
+    (async () => {
+      try {
+        const response = await fetch(event.request);
         if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+          const cache = await caches.open(SW_VERSION);
+          cache.put(event.request, response.clone());
         }
         return response;
-      });
-    })
+      } catch {
+        // Sin red → sirve desde caché
+        const cached = await caches.match(event.request);
+        return cached || new Response('Sin conexión', { status: 503 });
+      }
+    })()
   );
 });

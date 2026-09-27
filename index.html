@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="Piano app con acordes - Piano Chord App">
-  <title>PianoChord</title>
+  <title>Piano ahhgag</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="style.css">
@@ -18,7 +18,7 @@
 <div id="loading-screen">
   <div class="loading-content">
     <div class="piano-icon">🎹</div>
-    <h1>PianoChord</h1>
+    <h1>Piano ahhgag</h1>
     <p id="loading-text">Cargando sonidos... / Loading sounds...</p>
     <div class="progress-bar-outer">
       <div class="progress-bar-inner" id="progress-bar"></div>
@@ -32,39 +32,45 @@
 
   <!-- INSTALL BANNER -->
   <div id="install-banner" class="install-banner hidden">
-    <span id="install-text">📲 Instalá la app en tu celular</span>
+    <span id="install-text">📲 Instalá la app</span>
     <button id="install-btn" class="install-btn">Instalar</button>
     <button id="dismiss-install" class="dismiss-btn" aria-label="Cerrar">✕</button>
   </div>
 
-  <!-- HEADER -->
+  <!-- TOP BAR: logo + timbres + lang + settings (todo en una sola fila) -->
   <header>
-    <div class="header-left">
-      <span class="app-title">🎹 PianoChord</span>
+    <span class="app-title">🎹</span>
+    <div class="timbre-tabs" id="timbre-tabs">
+      <button class="timbre-tab active" data-timbre="grand">🎹 Grand</button>
+      <button class="timbre-tab" data-timbre="cabaret">🎪 Cabaret</button>
+      <button class="timbre-tab" data-timbre="rock">🎸 Rock</button>
     </div>
     <div class="header-right">
-      <button id="lang-btn" class="icon-btn" title="Idioma / Language">ES</button>
-      <button id="settings-btn" class="icon-btn" title="Ajustes / Settings">⚙️</button>
+      <button id="lang-btn" class="icon-btn">ES</button>
+      <button id="settings-btn" class="icon-btn">⚙️</button>
     </div>
   </header>
 
-  <!-- TIMBRE SELECTOR -->
-  <section class="timbre-section">
-    <div class="timbre-label" data-i18n="timbre">Timbre</div>
-    <div class="timbre-tabs">
-      <button class="timbre-tab active" data-timbre="grand" data-i18n-t="grand">🎹 Grand Piano</button>
-      <button class="timbre-tab" data-timbre="cabaret" data-i18n-t="cabaret">🎪 Dark Cabaret</button>
-      <button class="timbre-tab" data-timbre="rock" data-i18n-t="rock">🎸 Rock/Emo</button>
-    </div>
-  </section>
-
-  <!-- CHORD PANEL -->
+  <!-- CHORD BAR: colapsada por defecto, una sola fila -->
   <section class="chord-section">
-    <div class="chord-section-header">
-      <span class="chord-section-title" data-i18n="chordGuide">🎵 Guía de Acordes</span>
-      <button id="chord-panel-toggle" class="toggle-btn" aria-expanded="true">▲</button>
+    <div class="chord-bar">
+      <button class="chord-bar-label" id="chord-panel-toggle" aria-expanded="false">
+        🎵 <span data-i18n="chords">Acordes</span> <span class="toggle-arrow">▼</span>
+      </button>
+      <!-- Selected chord mini-display (visible incluso cuando el panel está cerrado) -->
+      <span id="chord-tag" class="chord-tag hidden"></span>
+      <button id="play-chord-btn" class="play-chord-mini hidden" title="Tocar acorde">▶</button>
+      <button id="clear-chord-btn" class="clear-chord-mini hidden" title="Limpiar">✕</button>
+      <!-- Octave + volume compactos en la misma barra -->
+      <div class="bar-spacer"></div>
+      <button id="oct-down" class="oct-btn">−</button>
+      <span id="oct-display" class="oct-num">3</span>
+      <button id="oct-up" class="oct-btn">+</button>
+      <input type="range" id="vol-slider" class="vol-slider" min="0" max="1" step="0.05" value="0.8">
     </div>
-    <div id="chord-panel">
+
+    <!-- Chord panel expandible -->
+    <div id="chord-panel" class="chord-panel-collapsed">
       <div class="chord-categories">
         <button class="cat-btn active" data-cat="major" data-i18n-c="major">Mayor</button>
         <button class="cat-btn" data-cat="minor" data-i18n-c="minor">Menor</button>
@@ -77,38 +83,15 @@
     </div>
   </section>
 
-  <!-- CHORD DISPLAY -->
-  <div id="chord-display" class="chord-display hidden">
-    <div class="chord-name" id="chord-name-display"></div>
-    <div class="chord-notes" id="chord-notes-display"></div>
-    <button id="play-chord-btn" class="play-chord-btn" data-i18n="playChord">▶ Tocar Acorde</button>
-    <button id="clear-chord-btn" class="clear-chord-btn" data-i18n="clear">✕ Limpiar</button>
-  </div>
-
-  <!-- OCTAVE SELECTOR -->
-  <div class="octave-row">
-    <span data-i18n="octave">Octava:</span>
-    <button id="oct-down" class="oct-btn">−</button>
-    <span id="oct-display">3</span>
-    <button id="oct-up" class="oct-btn">+</button>
-    <div class="vol-row">
-      <span>🔊</span>
-      <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.8">
-    </div>
-  </div>
-
-  <!-- PIANO KEYBOARD -->
+  <!-- PIANO KEYBOARD (ocupa todo el espacio restante) -->
   <div class="piano-wrapper">
     <div id="piano" class="piano"></div>
   </div>
 
-  <!-- SUSTAIN PEDAL -->
+  <!-- BOTTOM BAR: sustain + nota tocando -->
   <div class="controls-row">
     <button id="sustain-btn" class="sustain-btn" data-i18n="sustain">🦶 Sustain</button>
-    <div class="note-indicator">
-      <span data-i18n="playing">Tocando: </span>
-      <span id="note-indicator">—</span>
-    </div>
+    <span id="note-indicator" class="note-indicator-text">—</span>
   </div>
 
 </div>
