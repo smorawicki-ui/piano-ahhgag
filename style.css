@@ -162,6 +162,47 @@ header {
 }
 .icon-btn:active { background: var(--accent); }
 
+/* ---- INSTALL BANNER ---- */
+.install-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+  animation: slideDown 0.3s ease;
+}
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+.install-btn {
+  margin-left: auto;
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.6);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.install-btn:active { background: rgba(255,255,255,0.45); }
+.dismiss-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 /* ---- TIMBRE SECTION ---- */
 .timbre-section {
   padding: 6px 10px 4px;
@@ -380,6 +421,7 @@ header {
   background: #000;
   display: flex;
   align-items: stretch;
+  touch-action: none;
 }
 
 .piano {

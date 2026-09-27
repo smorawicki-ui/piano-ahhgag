@@ -491,7 +491,6 @@ function renderPiano() {
       key.appendChild(label);
     }
 
-    attachKeyEvents(key, note.midi);
     piano.appendChild(key);
   });
 
@@ -531,7 +530,6 @@ function renderPiano() {
       key.appendChild(label);
     }
 
-    attachKeyEvents(key, note.midi);
     piano.appendChild(key);
   });
 
@@ -541,43 +539,79 @@ function renderPiano() {
   }
 }
 
-function attachKeyEvents(keyEl, midi) {
-  // Multi-touch support
-  keyEl.addEventListener('pointerdown', (e) => {
+// ============================================================
+// PIANO TOUCH/POINTER EVENTS (glissando-capable)
+// ============================================================
+
+// Maps each active pointerId -> { midi, keyEl }
+const activePointers = new Map();
+
+function getKeyAtPoint(x, y) {
+  // elementFromPoint may return a child span (note label) — walk up to the key div
+  let el = document.elementFromPoint(x, y);
+  while (el && el !== document.body) {
+    if (el.dataset && el.dataset.midi) return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+
+function setupPianoEvents() {
+  const piano = document.getElementById('piano');
+  if (!piano) return;
+
+  // Remove any existing listeners by cloning (safe since we only call this once)
+  piano.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    keyEl.setPointerCapture(e.pointerId);
+    // Capture on the piano div so pointermove keeps firing even when sliding fast
+    try { piano.setPointerCapture(e.pointerId); } catch (_) {}
+
+    const keyEl = getKeyAtPoint(e.clientX, e.clientY);
+    if (!keyEl) return;
+    const midi = parseInt(keyEl.dataset.midi);
+    if (isNaN(midi)) return;
+
+    activePointers.set(e.pointerId, { midi, keyEl });
     keyEl.classList.add('active');
     playNote(midi);
     updateNoteIndicator(midi);
   }, { passive: false });
 
-  keyEl.addEventListener('pointerup', (e) => {
+  piano.addEventListener('pointermove', (e) => {
+    if (!activePointers.has(e.pointerId)) return;
     e.preventDefault();
-    keyEl.classList.remove('active');
-    releaseNote(midi);
+
+    const keyEl = getKeyAtPoint(e.clientX, e.clientY);
+    if (!keyEl) return;
+    const newMidi = parseInt(keyEl.dataset.midi);
+    if (isNaN(newMidi)) return;
+
+    const prev = activePointers.get(e.pointerId);
+    if (prev.midi === newMidi) return; // still on same key
+
+    // Leave previous key
+    if (!state.sustain) releaseNote(prev.midi);
+    prev.keyEl.classList.remove('active');
+
+    // Enter new key
+    activePointers.set(e.pointerId, { midi: newMidi, keyEl });
+    keyEl.classList.add('active');
+    playNote(newMidi);
+    updateNoteIndicator(newMidi);
   }, { passive: false });
 
-  keyEl.addEventListener('pointercancel', (e) => {
-    keyEl.classList.remove('active');
-    releaseNote(midi);
-  });
+  const endPointer = (e) => {
+    const prev = activePointers.get(e.pointerId);
+    if (!prev) return;
+    releaseNote(prev.midi);
+    prev.keyEl.classList.remove('active');
+    activePointers.delete(e.pointerId);
+  };
 
-  // Handle slide-in (finger slides onto key)
-  keyEl.addEventListener('pointerenter', (e) => {
-    if (e.buttons > 0) {
-      keyEl.classList.add('active');
-      playNote(midi);
-      updateNoteIndicator(midi);
-    }
-  });
-
-  keyEl.addEventListener('pointerleave', (e) => {
-    if (e.buttons > 0) {
-      keyEl.classList.remove('active');
-      releaseNote(midi);
-    }
-  });
+  piano.addEventListener('pointerup',     endPointer);
+  piano.addEventListener('pointercancel', endPointer);
 }
+
 
 function updateNoteIndicator(midi) {
   const noteIndex = midi % 12;
@@ -798,6 +832,7 @@ async function init() {
   updateOctaveDisplay();
   renderChordList();
   renderPiano();
+  setupPianoEvents(); // set up glissando-capable touch handling (once, on piano div)
   bindEvents();
 
   // Update UI controls to match state
@@ -818,6 +853,36 @@ async function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
+
+  // PWA Install prompt — intercept beforeinstallprompt to show our custom banner
+  let deferredInstallPrompt = null;
+  const installBanner  = document.getElementById('install-banner');
+  const installBtn     = document.getElementById('install-btn');
+  const dismissInstall = document.getElementById('dismiss-install');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); // prevent mini-infobar
+    deferredInstallPrompt = e;
+    installBanner.classList.remove('hidden'); // show our banner
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBanner.classList.add('hidden');
+  });
+
+  dismissInstall.addEventListener('click', () => {
+    installBanner.classList.add('hidden');
+  });
+
+  // Hide banner once app is installed
+  window.addEventListener('appinstalled', () => {
+    installBanner.classList.add('hidden');
+    deferredInstallPrompt = null;
+  });
 
   // Handle resize
   window.addEventListener('resize', () => {

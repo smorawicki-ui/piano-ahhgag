@@ -4,10 +4,11 @@
   "description": "Piano virtual con guía de acordes / Virtual piano with chord guide",
   "start_url": "./",
   "display": "standalone",
-  "orientation": "any",
+  "orientation": "landscape",
   "background_color": "#0d0d1a",
   "theme_color": "#1a1a2e",
   "lang": "es",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icons/icon-192.png",
