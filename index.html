@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Piano app con acordes - Piano Chord App">
+  <title>PianoChord</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen">
+  <div class="loading-content">
+    <div class="piano-icon">🎹</div>
+    <h1>PianoChord</h1>
+    <p id="loading-text">Cargando sonidos... / Loading sounds...</p>
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="progress-bar"></div>
+    </div>
+    <p id="loading-percent">0%</p>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="hidden">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <span class="app-title">🎹 PianoChord</span>
+    </div>
+    <div class="header-right">
+      <button id="lang-btn" class="icon-btn" title="Idioma / Language">ES</button>
+      <button id="settings-btn" class="icon-btn" title="Ajustes / Settings">⚙️</button>
+    </div>
+  </header>
+
+  <!-- TIMBRE SELECTOR -->
+  <section class="timbre-section">
+    <div class="timbre-label" data-i18n="timbre">Timbre</div>
+    <div class="timbre-tabs">
+      <button class="timbre-tab active" data-timbre="grand" data-i18n-t="grand">🎹 Grand Piano</button>
+      <button class="timbre-tab" data-timbre="cabaret" data-i18n-t="cabaret">🎪 Dark Cabaret</button>
+      <button class="timbre-tab" data-timbre="rock" data-i18n-t="rock">🎸 Rock/Emo</button>
+    </div>
+  </section>
+
+  <!-- CHORD PANEL -->
+  <section class="chord-section">
+    <div class="chord-section-header">
+      <span class="chord-section-title" data-i18n="chordGuide">🎵 Guía de Acordes</span>
+      <button id="chord-panel-toggle" class="toggle-btn" aria-expanded="true">▲</button>
+    </div>
+    <div id="chord-panel">
+      <div class="chord-categories">
+        <button class="cat-btn active" data-cat="major" data-i18n-c="major">Mayor</button>
+        <button class="cat-btn" data-cat="minor" data-i18n-c="minor">Menor</button>
+        <button class="cat-btn" data-cat="seventh" data-i18n-c="seventh">7ª</button>
+        <button class="cat-btn" data-cat="sus" data-i18n-c="sus">Sus</button>
+      </div>
+      <div class="chord-scroll">
+        <div id="chord-list" class="chord-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHORD DISPLAY -->
+  <div id="chord-display" class="chord-display hidden">
+    <div class="chord-name" id="chord-name-display"></div>
+    <div class="chord-notes" id="chord-notes-display"></div>
+    <button id="play-chord-btn" class="play-chord-btn" data-i18n="playChord">▶ Tocar Acorde</button>
+    <button id="clear-chord-btn" class="clear-chord-btn" data-i18n="clear">✕ Limpiar</button>
+  </div>
+
+  <!-- OCTAVE SELECTOR -->
+  <div class="octave-row">
+    <span data-i18n="octave">Octava:</span>
+    <button id="oct-down" class="oct-btn">−</button>
+    <span id="oct-display">3</span>
+    <button id="oct-up" class="oct-btn">+</button>
+    <div class="vol-row">
+      <span>🔊</span>
+      <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.8">
+    </div>
+  </div>
+
+  <!-- PIANO KEYBOARD -->
+  <div class="piano-wrapper">
+    <div id="piano" class="piano"></div>
+  </div>
+
+  <!-- SUSTAIN PEDAL -->
+  <div class="controls-row">
+    <button id="sustain-btn" class="sustain-btn" data-i18n="sustain">🦶 Sustain</button>
+    <div class="note-indicator">
+      <span data-i18n="playing">Tocando: </span>
+      <span id="note-indicator">—</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 data-i18n="settings">Ajustes</h2>
+      <button id="close-settings" class="close-btn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-row">
+        <label data-i18n="reverb">Reverb</label>
+        <input type="range" id="reverb-slider" min="0" max="1" step="0.05" value="0.3">
+        <span id="reverb-val">30%</span>
+      </div>
+      <div class="setting-row">
+        <label data-i18n="release">Release</label>
+        <input type="range" id="release-slider" min="0.3" max="4" step="0.1" value="1.5">
+        <span id="release-val">1.5s</span>
+      </div>
+      <div class="setting-row">
+        <label data-i18n="showNoteNames">Mostrar notas</label>
+        <input type="checkbox" id="show-notes-cb" checked>
+      </div>
+      <div class="setting-row">
+        <label data-i18n="showChordHighlight">Resaltar acordes</label>
+        <input type="checkbox" id="highlight-cb" checked>
+      </div>
+      <hr>
+      <p class="setting-info" data-i18n="cacheInfo">Los sonidos se guardan en caché para uso offline.</p>
+      <button id="clear-cache-btn" class="danger-btn" data-i18n="clearCache">🗑️ Borrar caché</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
